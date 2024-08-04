@@ -1,4 +1,4 @@
-package org.dfpl.lecture.database.assignment2.assignment1
+package org.dfpl.lecture.database.assignment2.assignment1;
 
 import java.util.ArrayList;
 import java.util.Arrays;
