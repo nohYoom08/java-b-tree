@@ -1,4 +1,4 @@
-package org.dfpl.lecture.database.assignment2.assignment1_20011751;
+package org.dfpl.lecture.database.assignment2.assignment1
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -304,54 +304,21 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 		
 		
 		if(node.children.isEmpty()) {	//잎새노드에서 balance가 일어나는 경우
-			if(RS != null) {	//RS가 있는 경우
-				if(RS.keyList.size()>min_key) {	//RS에 키값 개수가 min_key보다 많을 때 가져오는 상황
-					node.keyList.add(RS.keyList.getFirst());	//RS의 첫번째 키값을 node에 추가
-					
-					RS.keyList.remove(0);	//리프노드에서는 맨 왼쪽 키값이 PLV값이므로
-					node.parent.keyList.set(index,RS.keyList.getFirst());	//node.parent에서의 PLV값과 RS의 첫번째 키값 동일하게 설정
-				}
-				else if(RS.keyList.size()==min_key){	//RS에 키값 개수가 min_key보다 적을 때 합병하는 상황
-					
-					tmp = new MyBPlusTreeNode(m);	//합병에 쓰일 매개노드 tmp 동적할당
-					
-					// T, PRV, RS의 키값 합병
-					for(int i=0;i<node.keyList.size();i++) 	//T의 키들 합병
-						tmp.keyList.add(node.keyList.get(i));
-					
-					for(int i=0;i<RS.keyList.size();i++) 	//RS의 키값 합병 (PRV와 RS의 첫번째 키값과 동일하므로 PRV합병과정은 생략)
-						tmp.keyList.add(RS.keyList.get(i));
-					
-					
-					node.parent.keyList.remove(index);	//합병된 PRV 키 삭제
-					if(node.parent==root && node.parent.keyList.size()==0){ 	//node.parent가 root였고 삭제된 이후 키값이 존재하지 않을 때
-						root=tmp;	//tmp가 새로운 root가 됨
-						height--;
-					}
-					
-					else {
-						tmp.parent=node.parent; //tmp의 부모 설정
-						node.parent.children.remove(index);
-						node.parent.children.remove(index); //기존의 node.parent에 있던 자식들(node, RS) 삭제
-						node.parent.children.add(index,tmp);	//tmp를 자식으로 새로 추가 (첫 번째 자식으로)
-					}
-					leafList.remove(leafIndex);	
-					leafList.remove(leafIndex);	//기존의 leafList에 있던 노드들(node, RS) 삭제
-					leafList.add(leafIndex,tmp);	//tmp를 새로 leafList의 해당 인덱스의 노드로 추가
-					
-					if(root != tmp && root != tmp.parent)	//첫 번째 리프노드와 첫 번째 리프노드의 부모가 모두 root가 아닌 경우
-						if(tmp.parent.keyList.size()<min_key)	//부모가 min_key를 지키지 못할 경우, 부모노드에 대해 balance 다시 실행
-							balance(tmp.parent);
-				}
-			}
-			else if(LS!=null) {	//LS가 있는 경우
-				if(LS.keyList.size()>min_key) {	//LS에 키값 개수가 min_key보다 많을 때 가져오는 상황
+			if(LS!=null || RS!=null) {	
+				if(LS != null && LS.keyList.size()>min_key) {	//LS에 키값 개수가 min_key보다 많을 때 가져오는 상황
 					node.keyList.add(0,LS.keyList.getLast());	//LS의 마지막 키값을 node에 추가
 					
 					LS.keyList.remove(LS.keyList.size()-1);	//리프노드에서는 맨 왼쪽 키값이 PLV값이므로
 					node.parent.keyList.set(index-1,node.keyList.getFirst());	//node.parent에서의 PLV값과 LS의 첫번째 키값 동일하게 설정
 				}
-				else if(LS.keyList.size()==min_key){	//LS에 키값 개수가 min_key보다 적을 때 합병하는 상황
+				else if(RS != null && RS.keyList.size()>min_key) {	//RS에 키값 개수가 min_key보다 많을 때 가져오는 상황
+					node.keyList.add(RS.keyList.getFirst());	//RS의 첫번째 키값을 node에 추가
+					
+					RS.keyList.remove(0);	//리프노드에서는 맨 왼쪽 키값이 PLV값이므로
+					node.parent.keyList.set(index,RS.keyList.getFirst());	//node.parent에서의 PLV값과 RS의 첫번째 키값 동일하게 설정
+				}
+
+				else if(LS != null && LS.keyList.size()==min_key){	//LS에 키값 개수가 min_key보다 적을 때 합병하는 상황
 					
 					tmp = new MyBPlusTreeNode(m);	//합병에 쓰일 매개노드 tmp 동적할당
 					
@@ -387,67 +354,44 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 						if(tmp.parent.keyList.size()<min_key)	//부모가 min_key를 지키지 못할 경우, 부모노드에 대해 balance 다시 실행
 							balance(tmp.parent);
 				}
-			}
-		}
-		else {	//내부노드에서 balance가 일어나는 경우
-			if(RS != null) {	
-				if(RS.keyList.size()>min_key) {	//RS에 키값 개수가 min_key보다 많을 때 가져오는 상황
-					node.keyList.add(node.parent.keyList.get(index));	//형제노드의 첫번째 키값 가져옴
-					node.children.add(RS.children.getFirst());	//형제노드의 첫번째 자식과 연결
-					RS.children.getFirst().parent=node;
+
+				else if(RS!=null && RS.keyList.size()==min_key){	//RS에 키값 개수가 min_key보다 적을 때 합병하는 상황
 					
-					node.parent.keyList.set(index,RS.keyList.getFirst());	//부모노드에 오른쪽 자식노드 첫 번째 키값 옮김
-				
+					tmp = new MyBPlusTreeNode(m);	//합병에 쓰일 매개노드 tmp 동적할당
 					
-					RS.keyList.remove(0);	//node에다 갖다준 RS의 키와 자식 삭제
-					RS.children.remove(0);
-				}
-				else {	//RS에 키값 개수가 min_key보다 적을 때 합병하는 상황
-					tmp = new MyBPlusTreeNode(m);
-					
-					//T, RS, PRV 모두 합친 키리스트를 tmp.keyList에 추가 (합병)
-					for(int i=0;i<node.keyList.size();i++) 	//T 추가
+					// T, PRV, RS의 키값 합병
+					for(int i=0;i<node.keyList.size();i++) 	//T의 키들 합병
 						tmp.keyList.add(node.keyList.get(i));
 					
-					tmp.keyList.add(node.parent.keyList.get(index));	//PRV 추가
-					
-					for(int i=0;i<RS.keyList.size();i++)	//RS 추가
+					for(int i=0;i<RS.keyList.size();i++) 	//RS의 키값 합병 (PRV와 RS의 첫번째 키값과 동일하므로 PRV합병과정은 생략)
 						tmp.keyList.add(RS.keyList.get(i));
 					
 					
-					//합병과 동시에 T, RS의 자식들의 부모를 모두 새로운 노드 tmp로 연결
-					for(int i=0;i<node.children.size();i++) {
-						tmp.children.add(node.children.get(i));
-						node.children.get(i).parent=tmp;
-					}
-					
-					for(int i=0;i<RS.children.size();i++) {
-						tmp.children.add(RS.children.get(i));
-						RS.children.get(i).parent=tmp;
-					}
-					
-					
-					node.parent.keyList.remove(index);	//합병된 키 PRV 삭제
-					if(node.parent==root && node.parent.keyList.size()==0) { 	//node.parent가 루트였고 아무런 키가 없을 경우
-						root=tmp;	//왼쪽 자식이 새로운 루트가 됨
-						height--;							
+					node.parent.keyList.remove(index);	//합병된 PRV 키 삭제
+					if(node.parent==root && node.parent.keyList.size()==0){ 	//node.parent가 root였고 삭제된 이후 키값이 존재하지 않을 때
+						root=tmp;	//tmp가 새로운 root가 됨
+						height--;
 					}
 					
 					else {
-						tmp.parent=node.parent;
+						tmp.parent=node.parent; //tmp의 부모 설정
 						node.parent.children.remove(index);
 						node.parent.children.remove(index); //기존의 node.parent에 있던 자식들(node, RS) 삭제
-						node.parent.children.add(index,tmp); //tmp를 자식으로 새로 추가 (해당 인덱스의 자식으로)
-											
-						if(node.parent.keyList.size()<min_key)	//부모의 키값개수가 min_key 조건을 만족 못할 시 => 재귀
-							balance(node.parent);
+						node.parent.children.add(index,tmp);	//tmp를 자식으로 새로 추가 (첫 번째 자식으로)
 					}
+					leafList.remove(leafIndex);	
+					leafList.remove(leafIndex);	//기존의 leafList에 있던 노드들(node, RS) 삭제
+					leafList.add(leafIndex,tmp);	//tmp를 새로 leafList의 해당 인덱스의 노드로 추가
 					
-					
+					if(root != tmp && root != tmp.parent)	//첫 번째 리프노드와 첫 번째 리프노드의 부모가 모두 root가 아닌 경우
+						if(tmp.parent.keyList.size()<min_key)	//부모가 min_key를 지키지 못할 경우, 부모노드에 대해 balance 다시 실행
+							balance(tmp.parent);
 				}
 			}
-			else if(LS!=null) {	//왼쪽 형제노드가 키값 개수가 여유 있을 경우
-				if(LS.keyList.size()>min_key) {	//LS에 키값 개수가 min_key보다 많을 때 가져오는 상황
+		}
+		else {	//내부노드에서 balance가 일어나는 경우
+			if(LS!=null || RS!=null) {
+				if(LS!=null && LS.keyList.size()>min_key) {	//LS에 키값 개수가 min_key보다 많을 때 가져오는 상황
 					node.keyList.add(0,node.parent.keyList.getLast());	//형제노드의 첫번째 키값 가져옴
 					node.children.add(0,LS.children.getLast());	//형제노드의 첫번째 자식과 연결
 					LS.children.getLast().parent=node;
@@ -458,7 +402,18 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 					LS.keyList.remove(LS.keyList.size()-1);	//node에다 갖다준 RS의 키와 자식 삭제
 					LS.children.remove(LS.children.size()-1);
 				}
-				else {	//LS에 키값 개수가 min_key보다 적을 때 합병하는 상황
+				else if(RS!=null && RS.keyList.size()>min_key) {	//RS에 키값 개수가 min_key보다 많을 때 가져오는 상황
+					node.keyList.add(node.parent.keyList.get(index));	//형제노드의 첫번째 키값 가져옴
+					node.children.add(RS.children.getFirst());	//형제노드의 첫번째 자식과 연결
+					RS.children.getFirst().parent=node;
+					
+					node.parent.keyList.set(index,RS.keyList.getFirst());	//부모노드에 오른쪽 자식노드 첫 번째 키값 옮김
+				
+					
+					RS.keyList.remove(0);	//node에다 갖다준 RS의 키와 자식 삭제
+					RS.children.remove(0);
+				}
+				else if (LS!=null && LS.keyList.size()==min_key) {	//LS에 키값 개수가 min_key보다 적을 때 합병하는 상황
 					tmp = new MyBPlusTreeNode(m);
 					
 					for(int i=0;i<LS.keyList.size();i++)	//LS 추가
@@ -498,6 +453,49 @@ public class MyBPlusTree implements NavigableSet<Integer> {
 						node.parent.children.add(index-1,tmp); //tmp를 자식으로 새로 추가 (해당 인덱스의 자식으로)
 						
 						if(node.parent.keyList.size()<min_key) //부모의 키값개수가 min_key 조건을 만족 못할 시 => 재귀
+							balance(node.parent);
+					}
+					
+					
+				}
+				else if (RS!=null && RS.keyList.size()==min_key) {	//RS에 키값 개수가 min_key보다 적을 때 합병하는 상황
+					tmp = new MyBPlusTreeNode(m);
+					
+					//T, RS, PRV 모두 합친 키리스트를 tmp.keyList에 추가 (합병)
+					for(int i=0;i<node.keyList.size();i++) 	//T 추가
+						tmp.keyList.add(node.keyList.get(i));
+					
+					tmp.keyList.add(node.parent.keyList.get(index));	//PRV 추가
+					
+					for(int i=0;i<RS.keyList.size();i++)	//RS 추가
+						tmp.keyList.add(RS.keyList.get(i));
+					
+					
+					//합병과 동시에 T, RS의 자식들의 부모를 모두 새로운 노드 tmp로 연결
+					for(int i=0;i<node.children.size();i++) {
+						tmp.children.add(node.children.get(i));
+						node.children.get(i).parent=tmp;
+					}
+					
+					for(int i=0;i<RS.children.size();i++) {
+						tmp.children.add(RS.children.get(i));
+						RS.children.get(i).parent=tmp;
+					}
+					
+					
+					node.parent.keyList.remove(index);	//합병된 키 PRV 삭제
+					if(node.parent==root && node.parent.keyList.size()==0) { 	//node.parent가 루트였고 아무런 키가 없을 경우
+						root=tmp;	//왼쪽 자식이 새로운 루트가 됨
+						height--;							
+					}
+					
+					else {
+						tmp.parent=node.parent;
+						node.parent.children.remove(index);
+						node.parent.children.remove(index); //기존의 node.parent에 있던 자식들(node, RS) 삭제
+						node.parent.children.add(index,tmp); //tmp를 자식으로 새로 추가 (해당 인덱스의 자식으로)
+											
+						if(node.parent.keyList.size()<min_key)	//부모의 키값개수가 min_key 조건을 만족 못할 시 => 재귀
 							balance(node.parent);
 					}
 					
